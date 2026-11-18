@@ -160,15 +160,19 @@ async function loadPosts() {
       card.appendChild(note);
     } else {
       for (const item of mediaItems || []) {
-        const { data: urlData } = db.storage
-          .from("post-media")
-          .getPublicUrl(item.storage_path);
+        const { data: urlData, error: urlError } = await db.storage
+  .from("post-media")
+  .createSignedUrl(item.storage_path, 60 * 60);
+
+if (urlError || !urlData?.signedUrl) {
+  continue;
+}
 
         const element = document.createElement(
           item.media_type === "video" ? "video" : "img"
         );
 
-        element.src = urlData.publicUrl;
+        element.src = urlData.signedUrl;
 
         if (item.media_type === "video") {
           element.controls = true;
