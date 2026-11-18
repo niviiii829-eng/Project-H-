@@ -173,6 +173,10 @@ if (urlError || !urlData?.signedUrl) {
         );
 
         element.src = urlData.signedUrl;
+        element.onerror = () => {
+  element.alt = "IMAGE ERROR: Could not load this file";
+  element.style.border = "2px solid red";
+};
 
         if (item.media_type === "video") {
           element.controls = true;
