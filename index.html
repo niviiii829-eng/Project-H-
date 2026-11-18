@@ -1,170 +1,284 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Project H</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0b0d18;color:white;font-family:Arial,sans-serif}
-header{padding:22px;background:#15182a;border-bottom:1px solid #30334c}
-header h1{margin:0;color:#a98cff;letter-spacing:2px}
-main{max-width:600px;margin:auto;padding:18px}
-.card{background:#171b30;padding:17px;border-radius:16px;margin:15px 0}
-textarea{width:100%;min-height:90px;padding:12px;border-radius:10px;background:#0b0d18;color:white;border:1px solid #444;font:inherit}
-button{background:#8866e8;color:white;border:0;border-radius:10px;padding:12px 18px;margin-top:12px;font-weight:bold}
-.filebox{border:1px dashed #8064d9;padding:16px;border-radius:12px;margin-top:12px;text-align:center}
-input[type=file]{width:100%;margin-top:12px;color:#ccc}
-.preview img,.preview video,.media img,.media video{width:100%;max-height:400px;object-fit:contain;border-radius:12px;margin-top:12px;background:#080a12}
-.post{border-bottom:1px solid #333;padding:12px 0;overflow-wrap:anywhere}
-.actions{display:flex;gap:10px;align-items:center}
-.actions button{background:#292442;padding:9px 13px}
-.small{font-size:12px;color:#aaa;line-height:1.5}
+body{margin:0;background:#f3f4f6;color:#171717;font-family:Arial,sans-serif}
+header{background:#171717;color:white;padding:18px;text-align:center}
+main{max-width:650px;margin:20px auto;padding:12px}
+section,.post{background:white;padding:16px;border-radius:12px;margin-bottom:14px}
+input,textarea,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #ddd;font-size:15px}
+textarea{min-height:85px;resize:vertical}
+button{background:#171717;color:white;border:0;font-weight:bold;cursor:pointer}
+button.secondary{background:#e5e7eb;color:#171717}
+small,.muted{color:#666}
+.post img,.post video{width:100%;max-height:400px;object-fit:contain;margin-top:10px;border-radius:8px}
+.post p{white-space:pre-wrap;overflow-wrap:anywhere}
+#status{margin:10px 0;color:#444}
 </style>
 </head>
 <body>
 <header>
-<h1>PROJECT H</h1>
-<p>Discover. Connect. Create.</p>
+<h1>Project H</h1>
+<p>Share something. Discover something.</p>
 </header>
+
 <main>
-<div class="card">
-<h2>Welcome to Project H!</h2>
-<p>Your social world starts here.</p>
-</div>
+<section>
+<h3>Account</h3>
+<input id="email" type="email" placeholder="Email address">
+<input id="password" type="password" placeholder="Password (at least 6 characters)">
+<button id="signup">Create account</button>
+<button id="login" class="secondary">Log in</button>
+<button id="logout" class="secondary" hidden>Log out</button>
+<p id="accountStatus" class="muted">You are not logged in.</p>
+</section>
 
-<div class="card">
+<section>
 <h3>Create a post</h3>
-<textarea id="message" maxlength="1000" placeholder="What's on your mind?"></textarea>
+<textarea id="content" placeholder="What's happening?"></textarea>
+<input id="media" type="file" accept="image/*,video/*" multiple>
+<small>You can attach up to 5 photos or videos. Max 50 MB each.</small>
+<button id="publish">Publish</button>
+<p id="status"></p>
+</section>
 
-<div class="filebox">
-<b>📷 Add photos or videos</b>
-<input type="file" id="mediaInput" accept="image/*,video/*" multiple>
-<p class="small">Maximum 5 files. Photos and videos supported.</p>
-</div>
-
-<div class="preview" id="preview"></div>
-<button onclick="publishPost()">Publish post</button>
-<p class="small">Demo mode: posts and media are currently stored only in this browser session.</p>
-</div>
-
-<h2>Community feed</h2>
-<div id="feed">
-<div class="card post">
-<b>Project H</b>
-<p>Welcome! This is the beginning of something new.</p>
-</div>
-</div>
+<h2>Community Feed</h2>
+<div id="feed">Loading posts...</div>
 </main>
 
 <script>
-const input=document.getElementById("mediaInput");
-const preview=document.getElementById("preview");
-let selectedFiles=[];
-let previewURLs=[];
+const SUPABASE_URL = "https://dlfxcsugbmrxxnxcxyqx.supabase.co    ";
+const SUPABASE_KEY = "sb_publishable_pnF24wLGOT932BpguFYx3g_l1-e0XA0";
 
-input.addEventListener("change",()=>{
-  previewURLs.forEach(url=>URL.revokeObjectURL(url));
-  previewURLs=[];
-  selectedFiles=Array.from(input.files||[]).slice(0,5);
-  if(input.files.length>5) alert("You can select up to 5 files.");
-  preview.replaceChildren();
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  selectedFiles.forEach(file=>{
-    if(!file.type.startsWith("image/") &&
-       !file.type.startsWith("video/")) return;
+const $ = id => document.getElementById(id);
 
-    const url=URL.createObjectURL(file);
-    previewURLs.push(url);
-    let element;
+function message(text) {
+  $("status").textContent = text;
+}
 
-    if(file.type.startsWith("image/")){
-      element=document.createElement("img");
-      element.alt="Selected photo preview";
-    }else{
-      element=document.createElement("video");
-      element.controls=true;
-      element.playsInline=true;
-    }
+function escapeText(value) {
+  return String(value ?? "");
+}
 
-    element.src=url;
-    preview.appendChild(element);
-  });
-});
+async function updateAccount() {
+  const { data } = await db.auth.getSession();
+  const user = data.session?.user;
 
-function publishPost(){
-  const message=document.getElementById("message").value.trim();
+  $("accountStatus").textContent = user
+    ? "Logged in as " + user.email
+    : "You are not logged in.";
 
-  if(!message && selectedFiles.length===0){
-    alert("Write something or select a photo/video first!");
+  $("logout").hidden = !user;
+  return user;
+}
+
+$("signup").onclick = async () => {
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  if (!email || password.length < 6) {
+    alert("Enter an email and a password with at least 6 characters.");
     return;
   }
 
-  const post=document.createElement("div");
-  post.className="card post";
+  const { error } = await db.auth.signUp({ email, password });
 
-  const title=document.createElement("b");
-  title.textContent="Project H Member";
-  post.appendChild(title);
+  if (error) alert(error.message);
+  else alert("Account request submitted. Check your email if confirmation is required.");
+  await updateAccount();
+};
 
-  if(message){
-    const text=document.createElement("p");
-    text.textContent=message;
-    post.appendChild(text);
+$("login").onclick = async () => {
+  const { error } = await db.auth.signInWithPassword({
+    email: $("email").value.trim(),
+    password: $("password").value
+  });
+
+  if (error) alert(error.message);
+  else {
+    alert("Logged in successfully!");
+    await updateAccount();
+    await loadPosts();
+  }
+};
+
+$("logout").onclick = async () => {
+  await db.auth.signOut();
+  await updateAccount();
+  message("Logged out.");
+};
+
+async function loadPosts() {
+  const feed = $("feed");
+  feed.textContent = "Loading posts...";
+
+  const { data: posts, error } = await db
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    feed.textContent = "Could not load posts: " + error.message;
+    return;
   }
 
-  const media=document.createElement("div");
-  media.className="media";
+  feed.replaceChildren();
 
-  selectedFiles.forEach(file=>{
-    const url=URL.createObjectURL(file);
-    let element;
+  if (!posts || posts.length === 0) {
+    feed.textContent = "No posts yet. Be the first to share!";
+    return;
+  }
 
-    if(file.type.startsWith("image/")){
-      element=document.createElement("img");
-      element.alt="Shared photo";
-    }else if(file.type.startsWith("video/")){
-      element=document.createElement("video");
-      element.controls=true;
-      element.playsInline=true;
-    }else{
+  for (const post of posts) {
+    const card = document.createElement("article");
+    card.className = "post";
+
+    const text = document.createElement("p");
+    text.textContent = escapeText(post.content);
+    card.appendChild(text);
+
+    const date = document.createElement("small");
+    date.textContent = new Date(post.created_at).toLocaleString();
+    card.appendChild(date);
+
+    const { data: mediaItems, error: mediaError } = await db
+      .from("post_media")
+      .select("*")
+      .eq("post_id", post.id);
+
+    if (mediaError) {
+      const note = document.createElement("p");
+      note.textContent = "Media could not be loaded.";
+      card.appendChild(note);
+    } else {
+      for (const item of mediaItems || []) {
+        const { data: urlData } = db.storage
+          .from("post-media")
+          .getPublicUrl(item.storage_path);
+
+        const element = document.createElement(
+          item.media_type === "video" ? "video" : "img"
+        );
+
+        element.src = urlData.publicUrl;
+
+        if (item.media_type === "video") {
+          element.controls = true;
+        } else {
+          element.alt = "Post image";
+        }
+
+        card.appendChild(element);
+      }
+    }
+
+    feed.appendChild(card);
+  }
+}
+
+$("publish").onclick = async () => {
+  message("Publishing...");
+
+  const { data: sessionData } = await db.auth.getSession();
+  const user = sessionData.session?.user;
+
+  if (!user) {
+    message("Please create an account or log in first.");
+    return;
+  }
+
+  const content = $("content").value.trim();
+  const files = Array.from($("media").files);
+
+  if (!content && files.length === 0) {
+    message("Write something or select a photo/video.");
+    return;
+  }
+
+  if (files.length > 5) {
+    message("Please select no more than 5 files.");
+    return;
+  }
+
+  for (const file of files) {
+    if (file.size > 50 * 1024 * 1024) {
+      message("Each file must be smaller than 50 MB.");
       return;
     }
 
-    element.src=url;
-    media.appendChild(element);
-  });
+    if (!file.type.startsWith("image/") &&
+        !file.type.startsWith("video/")) {
+      message("Only image and video files are supported.");
+      return;
+    }
+  }
 
-  post.appendChild(media);
+  const { data: post, error: postError } = await db
+    .from("posts")
+    .insert({
+      user_id: user.id,
+      content: content
+    })
+    .select()
+    .single();
 
-  const actions=document.createElement("div");
-  actions.className="actions";
+  if (postError) {
+    message("Post failed: " + postError.message);
+    return;
+  }
 
-  const like=document.createElement("button");
-  like.textContent="♡ Like 0";
-  let liked=false;
-  let count=0;
+  for (const file of files) {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = user.id + "/" + crypto.randomUUID() + "_" + safeName;
 
-  like.onclick=()=>{
-    liked=!liked;
-    count+=liked?1:-1;
-    like.textContent=(liked?"♥ Like ":"♡ Like ")+count;
-  };
+    const { error: uploadError } = await db.storage
+      .from("post-media")
+      .upload(path, file);
 
-  actions.appendChild(like);
-  post.appendChild(actions);
+    if (uploadError) {
+      message("Post saved, but a file upload failed: " + uploadError.message);
+      await loadPosts();
+      return;
+    }
 
-  document.getElementById("feed").prepend(post);
+    const mediaType = file.type.startsWith("video/") ? "video" : "image";
 
-  document.getElementById("message").value="";
-  input.value="";
-  selectedFiles=[];
-  preview.replaceChildren();
-  previewURLs.forEach(url=>URL.revokeObjectURL(url));
-  previewURLs=[];
+    const { error: mediaError } = await db
+      .from("post_media")
+      .insert({
+        post_id: post.id,
+        user_id: user.id,
+        storage_path: path,
+        media_type: mediaType
+      });
 
-  alert("Your demo post is published!");
-}
+    if (mediaError) {
+      message("Post saved, but its media record failed: " + mediaError.message);
+      await loadPosts();
+      return;
+    }
+  }
+
+  $("content").value = "";
+  $("media").value = "";
+  message("Your post was published!");
+  await loadPosts();
+};
+
+db.auth.onAuthStateChange(() => {
+  updateAccount();
+});
+
+updateAccount();
+loadPosts();
 </script>
 </body>
 </html>
