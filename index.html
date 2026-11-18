@@ -1,95 +1,170 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Project H</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: #0b0d18;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
-    header {
-      padding: 22px;
-      background: #15182a;
-      border-bottom: 1px solid #30334c;
-    }
-    header h1 { margin: 0; color: #a98cff; }
-    main { padding: 20px; max-width: 600px; margin: auto; }
-    .card {
-      background: #171b30;
-      padding: 18px;
-      border-radius: 16px;
-      margin: 15px 0;
-    }
-    textarea {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      background: #0b0d18;
-      color: white;
-      border: 1px solid #444;
-    }
-    button {
-      background: #8866e8;
-      color: white;
-      border: 0;
-      border-radius: 10px;
-      padding: 12px 18px;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    .post { border-bottom: 1px solid #333; padding: 12px 0; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project H</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0d18;color:white;font-family:Arial,sans-serif}
+header{padding:22px;background:#15182a;border-bottom:1px solid #30334c}
+header h1{margin:0;color:#a98cff;letter-spacing:2px}
+main{max-width:600px;margin:auto;padding:18px}
+.card{background:#171b30;padding:17px;border-radius:16px;margin:15px 0}
+textarea{width:100%;min-height:90px;padding:12px;border-radius:10px;background:#0b0d18;color:white;border:1px solid #444;font:inherit}
+button{background:#8866e8;color:white;border:0;border-radius:10px;padding:12px 18px;margin-top:12px;font-weight:bold}
+.filebox{border:1px dashed #8064d9;padding:16px;border-radius:12px;margin-top:12px;text-align:center}
+input[type=file]{width:100%;margin-top:12px;color:#ccc}
+.preview img,.preview video,.media img,.media video{width:100%;max-height:400px;object-fit:contain;border-radius:12px;margin-top:12px;background:#080a12}
+.post{border-bottom:1px solid #333;padding:12px 0;overflow-wrap:anywhere}
+.actions{display:flex;gap:10px;align-items:center}
+.actions button{background:#292442;padding:9px 13px}
+.small{font-size:12px;color:#aaa;line-height:1.5}
+</style>
 </head>
 <body>
-  <header>
-    <h1>PROJECT H</h1>
-    <p>Discover. Connect. Create.</p>
-  </header>
+<header>
+<h1>PROJECT H</h1>
+<p>Discover. Connect. Create.</p>
+</header>
+<main>
+<div class="card">
+<h2>Welcome to Project H!</h2>
+<p>Your social world starts here.</p>
+</div>
 
-  <main>
-    <div class="card">
-      <h2>Welcome to Project H!</h2>
-      <p>Your new social world starts here.</p>
-    </div>
+<div class="card">
+<h3>Create a post</h3>
+<textarea id="message" maxlength="1000" placeholder="What's on your mind?"></textarea>
 
-    <div class="card">
-      <h3>Create a post</h3>
-      <textarea id="message" placeholder="What's on your mind?"></textarea>
-      <button onclick="publishPost()">Publish</button>
-    </div>
+<div class="filebox">
+<b>📷 Add photos or videos</b>
+<input type="file" id="mediaInput" accept="image/*,video/*" multiple>
+<p class="small">Maximum 5 files. Photos and videos supported.</p>
+</div>
 
-    <h2>Community feed</h2>
-    <div id="feed">
-      <div class="card post">
-        Welcome! This is the beginning of Project H.
-      </div>
-    </div>
-  </main>
+<div class="preview" id="preview"></div>
+<button onclick="publishPost()">Publish post</button>
+<p class="small">Demo mode: posts and media are currently stored only in this browser session.</p>
+</div>
 
-  <script>
-    function publishPost() {
-      const input = document.getElementById("message");
-      const text = input.value.trim();
+<h2>Community feed</h2>
+<div id="feed">
+<div class="card post">
+<b>Project H</b>
+<p>Welcome! This is the beginning of something new.</p>
+</div>
+</div>
+</main>
 
-      if (!text) {
-        alert("Write something first!");
-        return;
-      }
+<script>
+const input=document.getElementById("mediaInput");
+const preview=document.getElementById("preview");
+let selectedFiles=[];
+let previewURLs=[];
 
-      const post = document.createElement("div");
-      post.className = "card post";
-      post.textContent = text;
+input.addEventListener("change",()=>{
+  previewURLs.forEach(url=>URL.revokeObjectURL(url));
+  previewURLs=[];
+  selectedFiles=Array.from(input.files||[]).slice(0,5);
+  if(input.files.length>5) alert("You can select up to 5 files.");
+  preview.replaceChildren();
 
-      document.getElementById("feed").prepend(post);
-      input.value = "";
+  selectedFiles.forEach(file=>{
+    if(!file.type.startsWith("image/") &&
+       !file.type.startsWith("video/")) return;
+
+    const url=URL.createObjectURL(file);
+    previewURLs.push(url);
+    let element;
+
+    if(file.type.startsWith("image/")){
+      element=document.createElement("img");
+      element.alt="Selected photo preview";
+    }else{
+      element=document.createElement("video");
+      element.controls=true;
+      element.playsInline=true;
     }
-  </script>
+
+    element.src=url;
+    preview.appendChild(element);
+  });
+});
+
+function publishPost(){
+  const message=document.getElementById("message").value.trim();
+
+  if(!message && selectedFiles.length===0){
+    alert("Write something or select a photo/video first!");
+    return;
+  }
+
+  const post=document.createElement("div");
+  post.className="card post";
+
+  const title=document.createElement("b");
+  title.textContent="Project H Member";
+  post.appendChild(title);
+
+  if(message){
+    const text=document.createElement("p");
+    text.textContent=message;
+    post.appendChild(text);
+  }
+
+  const media=document.createElement("div");
+  media.className="media";
+
+  selectedFiles.forEach(file=>{
+    const url=URL.createObjectURL(file);
+    let element;
+
+    if(file.type.startsWith("image/")){
+      element=document.createElement("img");
+      element.alt="Shared photo";
+    }else if(file.type.startsWith("video/")){
+      element=document.createElement("video");
+      element.controls=true;
+      element.playsInline=true;
+    }else{
+      return;
+    }
+
+    element.src=url;
+    media.appendChild(element);
+  });
+
+  post.appendChild(media);
+
+  const actions=document.createElement("div");
+  actions.className="actions";
+
+  const like=document.createElement("button");
+  like.textContent="♡ Like 0";
+  let liked=false;
+  let count=0;
+
+  like.onclick=()=>{
+    liked=!liked;
+    count+=liked?1:-1;
+    like.textContent=(liked?"♥ Like ":"♡ Like ")+count;
+  };
+
+  actions.appendChild(like);
+  post.appendChild(actions);
+
+  document.getElementById("feed").prepend(post);
+
+  document.getElementById("message").value="";
+  input.value="";
+  selectedFiles=[];
+  preview.replaceChildren();
+  previewURLs.forEach(url=>URL.revokeObjectURL(url));
+  previewURLs=[];
+
+  alert("Your demo post is published!");
+}
+</script>
 </body>
 </html>
-w
