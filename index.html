@@ -223,6 +223,71 @@ likeButton.onclick = async () => {
   likeButton.textContent = "❤️ Liked";
   likeButton.disabled = true;
 };
+    const commentSection = document.createElement("div");
+
+const commentTitle = document.createElement("h4");
+commentTitle.textContent = "💬 Comments";
+commentSection.appendChild(commentTitle);
+
+const { data: comments, error: commentError } = await db
+  .from("post_comments")
+  .select("*")
+  .eq("post_id", post.id)
+  .order("created_at", { ascending: true });
+
+if (commentError) {
+  const note = document.createElement("p");
+  note.textContent = "Could not load comments.";
+  commentSection.appendChild(note);
+} else {
+  for (const comment of comments || []) {
+    const item = document.createElement("p");
+    item.textContent = comment.content;
+    commentSection.appendChild(item);
+  }
+}
+
+const commentInput = document.createElement("input");
+commentInput.placeholder = "Write a comment...";
+commentSection.appendChild(commentInput);
+
+const commentButton = document.createElement("button");
+commentButton.textContent = "Post comment";
+
+commentButton.onclick = async () => {
+  const { data: sessionData } = await db.auth.getSession();
+  const user = sessionData.session?.user;
+
+  if (!user) {
+    alert("Please log in to comment.");
+    return;
+  }
+
+  const content = commentInput.value.trim();
+
+  if (!content) {
+    alert("Write a comment first.");
+    return;
+  }
+
+  const { error } = await db
+    .from("post_comments")
+    .insert({
+      post_id: post.id,
+      user_id: user.id,
+      content: content
+    });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadPosts();
+};
+
+commentSection.appendChild(commentButton);
+card.appendChild(commentSection);
 
 card.appendChild(likeButton);
     feed.appendChild(card);
