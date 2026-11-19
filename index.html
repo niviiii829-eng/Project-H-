@@ -176,6 +176,18 @@ async function loadPosts() {
   for (const post of posts) {
     const card = document.createElement("article");
     card.className = "post";
+    const { data: profile } = await db
+  .from("profiles")
+  .select("username, display_name")
+  .eq("user_id", post.user_id)
+  .maybeSingle();
+
+const author = document.createElement("p");
+author.textContent = profile
+  ? profile.display_name + " (@" + profile.username + ")"
+  : "Project H member";
+
+card.appendChild(author);
 
     const text = document.createElement("p");
     text.textContent = escapeText(post.content);
