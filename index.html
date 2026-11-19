@@ -20,6 +20,60 @@ small,.muted{color:#666}
 .post img,.post video{width:100%;max-height:400px;object-fit:contain;margin-top:10px;border-radius:8px}
 .post p{white-space:pre-wrap;overflow-wrap:anywhere}
 #status{margin:10px 0;color:#444}
+  /* PROJECT H — FUTURISTIC DESIGN FOUNDATION */
+
+:root {
+  color-scheme: dark;
+  --bg: #101322;
+  --surface: #1b2035;
+  --surface2: #252b45;
+  --text: #f5f6ff;
+  --muted: #a9b1cc;
+  --accent: #9b82ff;
+  --border: #343b59;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+h1, h2, h3 {
+  color: var(--text);
+  letter-spacing: -0.4px;
+}
+
+button {
+  background: linear-gradient(135deg, #7658e8, #a17bff);
+  color: white;
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 17px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+input, textarea {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.post {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 14px 0;
+}
+
+img, video {
+  max-width: 100%;
+  border-radius: 12px;
+}
 </style>
 </head>
 <body>
