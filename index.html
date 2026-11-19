@@ -663,6 +663,75 @@ async function openPublicProfile(userId) {
     viewer.appendChild(bio);
 
     const heading = document.createElement("h3");
+    // Followers and following
+const { data: sessionData } = await db.auth.getSession();
+const currentUser = sessionData.session?.user;
+
+const { count: followers, error: followersError } = await db
+  .from("follows")
+  .select("*", { count: "exact", head: true })
+  .eq("following_id", userId);
+
+const { count: following, error: followingError } = await db
+  .from("follows")
+  .select("*", { count: "exact", head: true })
+  .eq("follower_id", userId);
+
+if (followersError) throw followersError;
+if (followingError) throw followingError;
+
+const counts = document.createElement("p");
+counts.textContent =
+  "Followers: " + (followers ?? 0) +
+  " | Following: " + (following ?? 0);
+viewer.appendChild(counts);
+
+if (currentUser && currentUser.id !== userId) {
+  const { data: existingFollow, error: followCheckError } = await db
+    .from("follows")
+    .select("follower_id")
+    .eq("follower_id", currentUser.id)
+    .eq("following_id", userId)
+    .maybeSingle();
+
+  if (followCheckError) throw followCheckError;
+
+  const followButton = document.createElement("button");
+  followButton.textContent = existingFollow ? "Unfollow" : "Follow";
+
+  followButton.onclick = async () => {
+    followButton.disabled = true;
+
+    try {
+      if (existingFollow) {
+        const { error } = await db
+          .from("follows")
+          .delete()
+          .eq("follower_id", currentUser.id)
+          .eq("following_id", userId);
+
+        if (error) throw error;
+      } else {
+        const { error } = await db
+          .from("follows")
+          .insert({
+            follower_id: currentUser.id,
+            following_id: userId
+          });
+
+        if (error) throw error;
+      }
+
+      await openPublicProfile(userId);
+
+    } catch (error) {
+      alert("Follow error: " + error.message);
+      followButton.disabled = false;
+    }
+  };
+
+  viewer.appendChild(followButton);
+}
     heading.textContent = "Posts";
     viewer.appendChild(heading);
 
