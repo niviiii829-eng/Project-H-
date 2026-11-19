@@ -187,7 +187,36 @@ if (urlError || !urlData?.signedUrl) {
         card.appendChild(element);
       }
     }
+const likeButton = document.createElement("button");
+likeButton.textContent = "❤️ Like";
+likeButton.onclick = async () => {
+  const { data: sessionData } = await db.auth.getSession();
+  const user = sessionData.session?.user;
 
+  if (!user) {
+    alert("Please log in to like posts.");
+    return;
+  }
+
+  const { error } = await db
+    .from("post_likes")
+    .insert({
+      post_id: post.id,
+      user_id: user.id
+    });
+
+  if (error) {
+    alert(error.code === "23505"
+      ? "You already liked this post!"
+      : error.message);
+    return;
+  }
+
+  likeButton.textContent = "❤️ Liked";
+  likeButton.disabled = true;
+};
+
+card.appendChild(likeButton);
     feed.appendChild(card);
   }
 }
