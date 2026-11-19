@@ -36,8 +36,14 @@ small,.muted{color:#666}
 <button id="signup">Create account</button>
 <button id="login" class="secondary">Log in</button>
 <button id="logout" class="secondary" hidden>Log out</button>
+
 <p id="accountStatus" class="muted">You are not logged in.</p>
 </section>
+  <input id="username" placeholder="Choose a username">
+<input id="displayName" placeholder="Your display name">
+<textarea id="bio" placeholder="Write a short bio"></textarea>
+<button id="saveProfile">Save profile</button>
+<p id="profileStatus" class="muted"></p>
 
 <section>
 <h3>Create a post</h3>
@@ -79,7 +85,37 @@ async function updateAccount() {
   $("logout").hidden = !user;
   return user;
 }
+$("saveProfile").onclick = async () => {
+  const { data } = await db.auth.getSession();
+  const user = data.session?.user;
 
+  if (!user) {
+    alert("Please log in first.");
+    return;
+  }
+
+  const username = $("username").value.trim();
+  const displayName = $("displayName").value.trim();
+  const bio = $("bio").value.trim();
+
+  if (!username || !displayName) {
+    alert("Username and display name are required.");
+    return;
+  }
+
+  const { error } = await db
+    .from("profiles")
+    .upsert({
+      user_id: user.id,
+      username,
+      display_name: displayName,
+      bio
+    }, { onConflict: "user_id" });
+
+  $("profileStatus").textContent = error
+    ? "Error: " + error.message
+    : "Profile saved successfully!";
+};
 $("signup").onclick = async () => {
   const email = $("email").value.trim();
   const password = $("password").value;
