@@ -59,23 +59,56 @@ small,.muted{color:#666}
 </main>
 
 <script>
+    
 const SUPABASE_URL = "https://dlfxcsugbmrxxnxcxyqx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_pnF24wLGOT932BpguFYx3g_l1-e0XA0";
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 const $ = id => document.getElementById(id);
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
 function message(text) {
   $("status").textContent = text;
 }
 
-function escapeText(value) {
-  return String(value ?? "");
+function withTimeout(promise, label) {
+  let timer;
+
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(label + " timed out. Please refresh.")),
+        15000
+      );
+    })
+  ]).finally(() => clearTimeout(timer));
+}
+
+async function getProfile(userId) {
+  const { data, error } = await withTimeout(
+    db.from("profiles")
+      .select("username, display_name")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    "Profile request"
+  );
+
+  if (error) throw error;
+  return data;
 }
 
 async function updateAccount() {
-  const { data } = await db.auth.getSession();
+  const { data, error } = await withTimeout(
+    db.auth.getSession(),
+    "Account request"
+  );
+
+  if (error) throw error;
+
   const user = data.session?.user;
 
   $("accountStatus").textContent = user
@@ -83,148 +116,200 @@ async function updateAccount() {
     : "You are not logged in.";
 
   $("logout").hidden = !user;
-  return user;
 }
-$("saveProfile").onclick = async () => {
-  const { data } = await db.auth.getSession();
-  const user = data.session?.user;
 
-  if (!user) {
-    alert("Please log in first.");
-    return;
-  }
-
-  const username = $("username").value.trim();
-  const displayName = $("displayName").value.trim();
-  const bio = $("bio").value.trim();
-
-  if (!username || !displayName) {
-    alert("Username and display name are required.");
-    return;
-  }
-
-  const { error } = await db
-    .from("profiles")
-    .upsert({
-      user_id: user.id,
-      username,
-      display_name: displayName,
-      bio
-    }, { onConflict: "user_id" });
-
-  $("profileStatus").textContent = error
-    ? "Error: " + error.message
-    : "Profile saved successfully!";
-};
 $("signup").onclick = async () => {
-  const email = $("email").value.trim();
-  const password = $("password").value;
+  try {
+    const email = $("email").value.trim();
+    const password = $("password").value;
 
-  if (!email || password.length < 6) {
-    alert("Enter an email and a password with at least 6 characters.");
-    return;
+    if (!email || password.length < 6) {
+      alert("Enter an email and a password with at least 6 characters.");
+      return;
+    }
+
+    const { error } = await withTimeout(
+      db.auth.signUp({ email, password }),
+      "Signup"
+    );
+
+    if (error) throw error;
+
+    alert("Account request submitted. Check your email if confirmation is required.");
+    await updateAccount();
+
+  } catch (error) {
+    alert("Signup error: " + error.message);
   }
-
-  const { error } = await db.auth.signUp({ email, password });
-
-  if (error) alert(error.message);
-  else alert("Account request submitted. Check your email if confirmation is required.");
-  await updateAccount();
 };
 
 $("login").onclick = async () => {
-  const { error } = await db.auth.signInWithPassword({
-    email: $("email").value.trim(),
-    password: $("password").value
-  });
+  try {
+    const email = $("email").value.trim();
+    const password = $("password").value;
 
-  if (error) alert(error.message);
-  else {
+    if (!email || !password) {
+      alert("Enter your email and password.");
+      return;
+    }
+
+    const { error } = await withTimeout(
+      db.auth.signInWithPassword({ email, password }),
+      "Login"
+    );
+
+    if (error) throw error;
+
     alert("Logged in successfully!");
     await updateAccount();
     await loadPosts();
+
+  } catch (error) {
+    alert("Login error: " + error.message);
   }
 };
 
 $("logout").onclick = async () => {
-  await db.auth.signOut();
-  await updateAccount();
-  message("Logged out.");
+  try {
+    const { error } = await withTimeout(
+      db.auth.signOut(),
+      "Logout"
+    );
+
+    if (error) throw error;
+
+    await updateAccount();
+    message("Logged out.");
+    await loadPosts();
+
+  } catch (error) {
+    message("Logout error: " + error.message);
+  }
+};
+
+$("saveProfile").onclick = async () => {
+  try {
+    const { data, error: sessionError } =
+      await db.auth.getSession();
+
+    if (sessionError) throw sessionError;
+
+    const user = data.session?.user;
+
+    if (!user) {
+      alert("Please log in first.");
+      return;
+    }
+
+    const username = $("username").value.trim();
+    const displayName = $("displayName").value.trim();
+    const bio = $("bio").value.trim();
+
+    if (!username || !displayName) {
+      alert("Username and display name are required.");
+      return;
+    }
+
+    const { error } = await withTimeout(
+      db.from("profiles").upsert({
+        user_id: user.id,
+        username,
+        display_name: displayName,
+        bio
+      }, { onConflict: "user_id" }),
+      "Profile save"
+    );
+
+    if (error) throw error;
+
+    $("profileStatus").textContent = "Profile saved successfully!";
+    await loadPosts();
+
+  } catch (error) {
+    $("profileStatus").textContent =
+      "Error: " + error.message;
+  }
 };
 
 async function loadPosts() {
   const feed = $("feed");
   feed.textContent = "Loading posts...";
 
-  const { data: posts, error } = await db
-    .from("posts")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const { data: posts, error } = await withTimeout(
+      db.from("posts")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      "Posts request"
+    );
 
-  if (error) {
-    feed.textContent = "Could not load posts: " + error.message;
-    return;
-  }
+    if (error) throw error;
 
-  feed.replaceChildren();
+    feed.replaceChildren();
 
-  if (!posts || posts.length === 0) {
-    feed.textContent = "No posts yet. Be the first to share!";
-    return;
-  }
+    if (!posts || posts.length === 0) {
+      feed.textContent = "No posts yet. Be the first to share!";
+      return;
+    }
 
-  for (const post of posts) {
-    const card = document.createElement("article");
-    card.className = "post";
-    const { data: profile } = await db
-  .from("profiles")
-  .select("username, display_name")
-  .eq("user_id", post.user_id)
-  .maybeSingle();
+    for (const post of posts) {
+      const card = document.createElement("article");
+      card.className = "post";
 
-const author = document.createElement("p");
-author.textContent = profile
-  ? profile.display_name + " (@" + profile.username + ")"
-  : "Project H member";
+      // Post author
+      try {
+        const profile = await getProfile(post.user_id);
 
-card.appendChild(author);
+        const author = document.createElement("p");
+        author.textContent = profile
+          ? profile.display_name + " (@" + profile.username + ")"
+          : "Project H member";
 
-    const text = document.createElement("p");
-    text.textContent = escapeText(post.content);
-    card.appendChild(text);
+        card.appendChild(author);
+      } catch (error) {
+        const author = document.createElement("p");
+        author.textContent = "Project H member";
+        card.appendChild(author);
+      }
 
-    const date = document.createElement("small");
-    date.textContent = new Date(post.created_at).toLocaleString();
-    card.appendChild(date);
+      // Post content
+      const content = document.createElement("p");
+      content.textContent = String(post.content ?? "");
+      card.appendChild(content);
 
-    const { data: mediaItems, error: mediaError } = await db
-      .from("post_media")
-      .select("*")
-      .eq("post_id", post.id);
+      // Post date
+      const date = document.createElement("small");
+      date.textContent =
+        new Date(post.created_at).toLocaleString();
+      card.appendChild(date);
 
-    if (mediaError) {
-      const note = document.createElement("p");
-      note.textContent = "Media could not be loaded.";
-      card.appendChild(note);
-    } else {
+      // Media
+      const { data: mediaItems, error: mediaError } =
+        await withTimeout(
+          db.from("post_media")
+            .select("*")
+            .eq("post_id", post.id),
+          "Media request"
+        );
+
+      if (mediaError) throw mediaError;
+
       for (const item of mediaItems || []) {
-        const { data: urlData, error: urlError } = await db.storage
-  .from("post-media")
-  .createSignedUrl(item.storage_path, 60 * 60);
+        const { data: urlData, error: urlError } =
+          await withTimeout(
+            db.storage
+              .from("post-media")
+              .createSignedUrl(item.storage_path, 3600),
+            "Image request"
+          );
 
-if (urlError || !urlData?.signedUrl) {
-  continue;
-}
+        if (urlError || !urlData?.signedUrl) continue;
 
         const element = document.createElement(
           item.media_type === "video" ? "video" : "img"
         );
 
         element.src = urlData.signedUrl;
-        element.onerror = () => {
-  element.alt = "IMAGE ERROR: Could not load this file";
-  element.style.border = "2px solid red";
-};
 
         if (item.media_type === "video") {
           element.controls = true;
@@ -234,223 +319,261 @@ if (urlError || !urlData?.signedUrl) {
 
         card.appendChild(element);
       }
+
+      // Like count
+      const { count, error: likeError } = await withTimeout(
+        db.from("post_likes")
+          .select("*", { count: "exact", head: true })
+          .eq("post_id", post.id),
+        "Like count request"
+      );
+
+      if (likeError) throw likeError;
+
+      const likeCount = document.createElement("p");
+      likeCount.textContent =
+        "❤️ " + (count ?? 0) + " likes";
+      card.appendChild(likeCount);
+
+      // Like button
+      const likeButton = document.createElement("button");
+      likeButton.textContent = "❤️ Like";
+
+      likeButton.onclick = async () => {
+        try {
+          const { data } = await db.auth.getSession();
+          const user = data.session?.user;
+
+          if (!user) {
+            alert("Please log in to like posts.");
+            return;
+          }
+
+          const { error } = await db.from("post_likes").insert({
+            post_id: post.id,
+            user_id: user.id
+          });
+
+          if (error) throw error;
+
+          likeButton.textContent = "❤️ Liked";
+          likeButton.disabled = true;
+
+        } catch (error) {
+          alert("Like error: " + error.message);
+        }
+      };
+
+      card.appendChild(likeButton);
+
+      // Comments
+      const commentSection = document.createElement("div");
+
+      const commentTitle = document.createElement("h4");
+      commentTitle.textContent = "💬 Comments";
+      commentSection.appendChild(commentTitle);
+
+      const { data: comments, error: commentError } =
+        await withTimeout(
+          db.from("post_comments")
+            .select("*")
+            .eq("post_id", post.id)
+            .order("created_at", { ascending: true }),
+          "Comments request"
+        );
+
+      if (commentError) throw commentError;
+
+      for (const comment of comments || []) {
+        const item = document.createElement("p");
+
+        let commenter = null;
+
+        try {
+          commenter = await getProfile(comment.user_id);
+        } catch (error) {}
+
+        const commentAuthor = document.createElement("strong");
+
+        commentAuthor.textContent = commenter
+          ? commenter.display_name + " (@" + commenter.username + "): "
+          : "Project H member: ";
+
+        item.appendChild(commentAuthor);
+        item.appendChild(
+          document.createTextNode(comment.content)
+        );
+
+        commentSection.appendChild(item);
+      }
+
+      // New comment input
+      const commentInput = document.createElement("input");
+      commentInput.placeholder = "Write a comment...";
+      commentSection.appendChild(commentInput);
+
+      const commentButton = document.createElement("button");
+      commentButton.textContent = "Post comment";
+
+      commentButton.onclick = async () => {
+        try {
+          const { data } = await db.auth.getSession();
+          const user = data.session?.user;
+
+          if (!user) {
+            alert("Please log in to comment.");
+            return;
+          }
+
+          const commentContent = commentInput.value.trim();
+
+          if (!commentContent) {
+            alert("Write a comment first.");
+            return;
+          }
+
+          const { error } = await db.from("post_comments").insert({
+            post_id: post.id,
+            user_id: user.id,
+            content: commentContent
+          });
+
+          if (error) throw error;
+
+          await loadPosts();
+
+        } catch (error) {
+          alert("Comment error: " + error.message);
+        }
+      };
+
+      commentSection.appendChild(commentButton);
+      card.appendChild(commentSection);
+      feed.appendChild(card);
     }
-    const { count } = await db
-  .from("post_likes")
-  .select("*", { count: "exact", head: true })
-  .eq("post_id", post.id);
 
-const likeCount = document.createElement("p");
-likeCount.textContent = "❤️ " + (count ?? 0) + " likes";
-card.appendChild(likeCount);
-const likeButton = document.createElement("button");
-likeButton.textContent = "❤️ Like";
-likeButton.onclick = async () => {
-  const { data: sessionData } = await db.auth.getSession();
-  const user = sessionData.session?.user;
-
-  if (!user) {
-    alert("Please log in to like posts.");
-    return;
+  } catch (error) {
+    feed.textContent = "Feed error: " + error.message;
   }
-
-  const { error } = await db
-    .from("post_likes")
-    .insert({
-      post_id: post.id,
-      user_id: user.id
-    });
-
-  if (error) {
-    alert(error.code === "23505"
-      ? "You already liked this post!"
-      : error.message);
-    return;
-  }
-
-  likeButton.textContent = "❤️ Liked";
-  likeButton.disabled = true;
-};
-    const commentSection = document.createElement("div");
-
-const commentTitle = document.createElement("h4");
-commentTitle.textContent = "💬 Comments";
-commentSection.appendChild(commentTitle);
-
-const { data: comments, error: commentError } = await db
-  .from("post_comments")
-  .select("*")
-  .eq("post_id", post.id)
-  .order("created_at", { ascending: true });
-
-if (commentError) {
-  const note = document.createElement("p");
-  note.textContent = "Could not load comments.";
-  commentSection.appendChild(note);
-} else {
-  for (const comment of comments || []) {
-    const item = document.createElement("p");
-    const { data: commenter } = await db
-  .from("profiles")
-  .select("username, display_name")
-  .eq("user_id", comment.user_id)
-  .maybeSingle();
-
-const commentAuthor = document.createElement("strong");
-commentAuthor.textContent = commenter
-  ? commenter.display_name + " (@" + commenter.username + "): "
-  : "Project H member: ";
-
-item.appendChild(commentAuthor);
-item.appendChild(document.createTextNode(comment.content));
-    commentSection.appendChild(item);
-  }
-}
-
-const commentInput = document.createElement("input");
-commentInput.placeholder = "Write a comment...";
-commentSection.appendChild(commentInput);
-
-const commentButton = document.createElement("button");
-commentButton.textContent = "Post comment";
-
-commentButton.onclick = async () => {
-  const { data: sessionData } = await db.auth.getSession();
-2  const user = sessionData.session?.user;
-
-  if (!user) {
-    alert("Please log in to comment.");
-    return;
-  }
-
-  const content = commentInput.value.trim();
-
-  if (!content) {
-    alert("Write a comment first.");
-    return;
-  }
-
-  const { error } = await db
-    .from("post_comments")
-    .insert({
-      post_id: post.id,
-      user_id: user.id,
-      content: content
-    });
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  await loadPosts();
 };
 
-commentSection.appendChild(commentButton);
-card.appendChild(commentSection);
-
-card.appendChild(likeButton);
-    feed.appendChild(card);
-  }
-}
-
+// Publish post
 $("publish").onclick = async () => {
-  message("Publishing...");
+  try {
+    message("Publishing...");
 
-  const { data: sessionData } = await db.auth.getSession();
-  const user = sessionData.session?.user;
+    const { data } = await db.auth.getSession();
+    const user = data.session?.user;
 
-  if (!user) {
-    message("Please create an account or log in first.");
-    return;
-  }
-
-  const content = $("content").value.trim();
-  const files = Array.from($("media").files);
-
-  if (!content && files.length === 0) {
-    message("Write something or select a photo/video.");
-    return;
-  }
-
-  if (files.length > 5) {
-    message("Please select no more than 5 files.");
-    return;
-  }
-
-  for (const file of files) {
-    if (file.size > 50 * 1024 * 1024) {
-      message("Each file must be smaller than 50 MB.");
+    if (!user) {
+      message("Please log in first.");
       return;
     }
 
-    if (!file.type.startsWith("image/") &&
-        !file.type.startsWith("video/")) {
-      message("Only image and video files are supported.");
-      return;
-    }
-  }
+    const content = $("content").value.trim();
+    const files = Array.from($("media").files);
 
-  const { data: post, error: postError } = await db
-    .from("posts")
-    .insert({
-      user_id: user.id,
-      content: content
-    })
-    .select()
-    .single();
-
-  if (postError) {
-    message("Post failed: " + postError.message);
-    return;
-  }
-
-  for (const file of files) {
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = user.id + "/" + crypto.randomUUID() + "_" + safeName;
-
-    const { error: uploadError } = await db.storage
-      .from("post-media")
-      .upload(path, file);
-
-    if (uploadError) {
-      message("Post saved, but a file upload failed: " + uploadError.message);
-      await loadPosts();
+    if (!content && files.length === 0) {
+      message("Write something or select a photo/video.");
       return;
     }
 
-    const mediaType = file.type.startsWith("video/") ? "video" : "image";
-
-    const { error: mediaError } = await db
-      .from("post_media")
-      .insert({
-        post_id: post.id,
-        user_id: user.id,
-        storage_path: path,
-        media_type: mediaType
-      });
-
-    if (mediaError) {
-      message("Post saved, but its media record failed: " + mediaError.message);
-      await loadPosts();
+    if (files.length > 5) {
+      message("Please select no more than 5 files.");
       return;
     }
-  }
 
-  $("content").value = "";
-  $("media").value = "";
-  message("Your post was published!");
-  await loadPosts();
+    for (const file of files) {
+      if (file.size > 50 * 1024 * 1024) {
+        message("Each file must be smaller than 50 MB.");
+        return;
+      }
+
+      if (!file.type.startsWith("image/") &&
+          !file.type.startsWith("video/")) {
+        message("Only images and videos are supported.");
+        return;
+      }
+    }
+
+    const { data: post, error: postError } =
+      await db.from("posts")
+        .insert({
+          user_id: user.id,
+          content
+        })
+        .select()
+        .single();
+
+    if (postError) throw postError;
+
+    for (const file of files) {
+      const safeName = file.name.replace(
+        /[^a-zA-Z0-9._-]/g,
+        "_"
+      );
+
+      const path =
+        user.id + "/" + crypto.randomUUID() + "_" + safeName;
+
+      const { error: uploadError } = await db.storage
+        .from("post-media")
+        .upload(path, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: mediaError } = await db
+        .from("post_media")
+        .insert({
+          post_id: post.id,
+          user_id: user.id,
+          storage_path: path,
+          media_type: file.type.startsWith("video/")
+            ? "video"
+            : "image"
+        });
+
+      if (mediaError) throw mediaError;
+    }
+
+    $("content").value = "";
+    $("media").value = "";
+
+    message("Your post was published!");
+    await loadPosts();
+
+  } catch (error) {
+    message("Publish error: " + error.message);
+  }
 };
 
-db.auth.onAuthStateChange(() => {
-  updateAccount();
+// Auth state updates
+db.auth.onAuthStateChange((_event, session) => {
+  const user = session?.user;
+
+  $("accountStatus").textContent = user
+    ? "Logged in as " + user.email
+    : "You are not logged in.";
+
+  $("logout").hidden = !user;
 });
 
-updateAccount();
-loadPosts().catch(error => {
-  document.getElementById("feed").textContent = "Feed error: " + error.message;
-});
+// Initial loading
+(async () => {
+  try {
+    await updateAccount();
+  } catch (error) {
+    $("accountStatus").textContent =
+      "Account error: " + error.message;
+  }
+
+  await loadPosts();
+})();
+    
+
+        
+
+  
 </script>
 </body>
 </html>
