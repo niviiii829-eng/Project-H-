@@ -303,7 +303,7 @@ commentAuthor.textContent = commenter
 
 item.appendChild(commentAuthor);
 item.appendChild(document.createTextNode(comment.content));
-    item.textContent = comment.content;
+    item.appendChild(document.createTextNode(comment.content));
     commentSection.appendChild(item);
   }
 }
