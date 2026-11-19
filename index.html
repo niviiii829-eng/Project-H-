@@ -55,6 +55,10 @@ small,.muted{color:#666}
 </section>
 
 <h2>Community Feed</h2>
+  <h2>🔍 Discover Members</h2>
+<input id="userSearch" placeholder="Search by username...">
+<button id="searchUsers">Search</button>
+<div id="searchResults"></div>
 <div id="feed">Loading posts...</div>
 </main>
 
@@ -569,7 +573,55 @@ db.auth.onAuthStateChange((_event, session) => {
 
   await loadPosts();
 })();
-    
+ // Discover members by username
+$("searchUsers").onclick = async () => {
+  const results = $("searchResults");
+  const query = $("userSearch").value.trim();
+
+  if (!query) {
+    results.textContent = "Enter a username to search.";
+    return;
+  }
+
+  results.textContent = "Searching...";
+
+  try {
+    const { data, error } = await db
+      .from("profiles")
+      .select("username, display_name, bio")
+      .ilike("username", "%" + query + "%")
+      .limit(20);
+
+    if (error) throw error;
+
+    results.replaceChildren();
+
+    if (!data || data.length === 0) {
+      results.textContent = "No members found.";
+      return;
+    }
+
+    data.forEach(profile => {
+      const card = document.createElement("div");
+      card.className = "post";
+
+      const name = document.createElement("strong");
+      name.textContent = profile.display_name || "Member";
+
+      const username = document.createElement("p");
+      username.textContent = "@" + profile.username;
+
+      const bio = document.createElement("p");
+      bio.textContent = profile.bio || "";
+
+      card.append(name, username, bio);
+      results.appendChild(card);
+    });
+
+  } catch (error) {
+    results.textContent = "Search error: " + error.message;
+  }
+};   
 
         
 
