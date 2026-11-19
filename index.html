@@ -671,12 +671,47 @@ async function openPublicProfile(userId) {
       return;
     }
 
-    posts.forEach(post => {
-      const item = document.createElement("div");
-      item.className = "post";
-      item.textContent = post.content || "Media post";
-      viewer.appendChild(item);
-    });
+    for (const post of posts) {
+  const item = document.createElement("div");
+  item.className = "post";
+
+  const content = document.createElement("p");
+  content.textContent = post.content || "";
+  item.appendChild(content);
+
+  const { data: mediaItems, error: mediaError } = await db
+    .from("post_media")
+    .select("*")
+    .eq("post_id", post.id);
+
+  if (mediaError) {
+    item.append("Media could not be loaded.");
+  } else {
+    for (const media of mediaItems || []) {
+      const { data: urlData, error: urlError } = await db.storage
+        .from("post-media")
+        .createSignedUrl(media.storage_path, 3600);
+
+      if (urlError || !urlData?.signedUrl) continue;
+
+      const element = document.createElement(
+        media.media_type === "video" ? "video" : "img"
+      );
+
+      element.src = urlData.signedUrl;
+
+      if (media.media_type === "video") {
+        element.controls = true;
+      } else {
+        element.alt = "Post image";
+      }
+
+      item.appendChild(element);
+    }
+  }
+
+  viewer.appendChild(item);
+    }
 
   } catch (error) {
     viewer.textContent = "Profile error: " + error.message;
