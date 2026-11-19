@@ -303,7 +303,6 @@ commentAuthor.textContent = commenter
 
 item.appendChild(commentAuthor);
 item.appendChild(document.createTextNode(comment.content));
-    item.appendChild(document.createTextNode(comment.content));
     commentSection.appendChild(item);
   }
 }
@@ -317,7 +316,7 @@ commentButton.textContent = "Post comment";
 
 commentButton.onclick = async () => {
   const { data: sessionData } = await db.auth.getSession();
-  const user = sessionData.session?.user;
+2  const user = sessionData.session?.user;
 
   if (!user) {
     alert("Please log in to comment.");
