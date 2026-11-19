@@ -1,4 +1,4 @@
-
+w
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -290,6 +290,19 @@ if (commentError) {
 } else {
   for (const comment of comments || []) {
     const item = document.createElement("p");
+    const { data: commenter } = await db
+  .from("profiles")
+  .select("username, display_name")
+  .eq("user_id", comment.user_id)
+  .maybeSingle();
+
+const commentAuthor = document.createElement("strong");
+commentAuthor.textContent = commenter
+  ? commenter.display_name + " (@" + commenter.username + "): "
+  : "Project H member: ";
+
+item.appendChild(commentAuthor);
+item.appendChild(document.createTextNode(comment.content));
     item.textContent = comment.content;
     commentSection.appendChild(item);
   }
