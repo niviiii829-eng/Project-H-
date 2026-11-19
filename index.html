@@ -187,6 +187,14 @@ if (urlError || !urlData?.signedUrl) {
         card.appendChild(element);
       }
     }
+    const { count } = await db
+  .from("post_likes")
+  .select("*", { count: "exact", head: true })
+  .eq("post_id", post.id);
+
+const likeCount = document.createElement("p");
+likeCount.textContent = "❤️ " + (count ?? 0) + " likes";
+card.appendChild(likeCount);
 const likeButton = document.createElement("button");
 likeButton.textContent = "❤️ Like";
 likeButton.onclick = async () => {
