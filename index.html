@@ -59,6 +59,7 @@ small,.muted{color:#666}
 <input id="userSearch" placeholder="Search by username...">
 <button id="searchUsers">Search</button>
 <div id="searchResults"></div>
+  <div id="publicProfile"></div>
 <div id="feed">Loading posts...</div>
 </main>
 
@@ -588,7 +589,7 @@ $("searchUsers").onclick = async () => {
   try {
     const { data, error } = await db
       .from("profiles")
-      .select("username, display_name, bio")
+      .select("user_id, username, display_name, bio")
       .ilike("username", "%" + query + "%")
       .limit(20);
 
@@ -615,6 +616,9 @@ $("searchUsers").onclick = async () => {
       bio.textContent = profile.bio || "";
 
       card.append(name, username, bio);
+
+card.style.cursor = "pointer";
+card.onclick = () => openPublicProfile(profile.user_id);
       results.appendChild(card);
     });
 
@@ -622,7 +626,62 @@ $("searchUsers").onclick = async () => {
     results.textContent = "Search error: " + error.message;
   }
 };   
+// Open a member's public profile
+async function openPublicProfile(userId) {
+  const viewer = $("publicProfile");
+  viewer.textContent = "Loading profile...";
 
+  try {
+    const { data: profile, error } = await db
+      .from("profiles")
+      .select("username, display_name, bio")
+      .eq("user_id", userId)
+      .single();
+
+    if (error) throw error;
+
+    const { data: posts, error: postError } = await db
+      .from("posts")
+      .select("id, content, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (postError) throw postError;
+
+    viewer.replaceChildren();
+
+    const title = document.createElement("h2");
+    title.textContent = profile.display_name || "Member";
+    viewer.appendChild(title);
+
+    const username = document.createElement("p");
+    username.textContent = "@" + profile.username;
+    viewer.appendChild(username);
+
+    const bio = document.createElement("p");
+    bio.textContent = profile.bio || "No bio yet.";
+    viewer.appendChild(bio);
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Posts";
+    viewer.appendChild(heading);
+
+    if (!posts || posts.length === 0) {
+      viewer.append("No posts yet.");
+      return;
+    }
+
+    posts.forEach(post => {
+      const item = document.createElement("div");
+      item.className = "post";
+      item.textContent = post.content || "Media post";
+      viewer.appendChild(item);
+    });
+
+  } catch (error) {
+    viewer.textContent = "Profile error: " + error.message;
+  }
+      }
         
 
   
