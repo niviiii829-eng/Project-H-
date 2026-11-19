@@ -448,7 +448,9 @@ db.auth.onAuthStateChange(() => {
 });
 
 updateAccount();
-loadPosts();
+loadPosts().catch(error => {
+  document.getElementById("feed").textContent = "Feed error: " + error.message;
+});
 </script>
 </body>
 </html>
