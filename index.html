@@ -215,7 +215,12 @@ body {
   margin: 0;
   padding: 13px 5px;
   font-size: 13px;
-  border-radius: 12px;
+}
+  .bottom-nav button.active {
+  background: linear-gradient(135deg, #6548d8, #a17bff);
+  color: white;
+  box-shadow: 0 0 14px rgba(155, 130, 255, 0.4);
+  border: 1px solid #b49cff;
 }
 </style>
 </head>
@@ -307,11 +312,16 @@ body {
   </section>
 
   <!-- BOTTOM NAVIGATION -->
-  <nav class="bottom-nav">
-    <button onclick="showScreen('homeScreen')">⌂ Home</button>
-    <button onclick="showScreen('communityScreen')">✦ Community</button>
-    <button onclick="showScreen('profileScreen')">◉ Profile</button>
-  </nav>
+<nav class="bottom-nav">
+  <button class="active" data-screen="homeScreen"
+    onclick="showScreen('homeScreen')">⌂ Home</button>
+
+  <button data-screen="communityScreen"
+    onclick="showScreen('communityScreen')">✦ Community</button>
+
+  <button data-screen="profileScreen"
+    onclick="showScreen('profileScreen')">◉ Profile</button>
+</nav>
 
 </main>
   
@@ -325,11 +335,14 @@ function showScreen(screenId) {
     screen.hidden = true;
   });
 
-  const selectedScreen = document.getElementById(screenId);
+  document.getElementById(screenId).hidden = false;
 
-  if (selectedScreen) {
-    selectedScreen.hidden = false;
-  }
+  document.querySelectorAll(".bottom-nav button").forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.screen === screenId
+    );
+  });
 
   window.scrollTo(0, 0);
 }
