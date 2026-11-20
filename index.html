@@ -479,6 +479,9 @@ body {
 <button onclick="saveTogetherActivity()">
   Start Activity
 </button>
+  <button onclick="refreshTttGame()">
+  🎮 Play Tic-Tac-Toe
+  </button>
 
 <p id="activityFeedback"></p>
 <p id="currentTogetherActivity">Choose an activity to begin.</p>
@@ -1421,9 +1424,12 @@ async function refreshTogetherLobby() {
   $("currentTogetherActivity").textContent =
     "🎉 Current activity: " + data.activity;
   }
-  function renderTttGame(data) {
+  async function renderTttGame(data) {
   const board = $("tttBoard");
   const buttons = board.querySelectorAll("button");
+
+  const { data: authData } = await db.auth.getUser();
+  const userId = authData.user?.id;
 
   data.board.forEach((mark, index) => {
     buttons[index].textContent = mark;
@@ -1431,26 +1437,23 @@ async function refreshTogetherLobby() {
       !!mark || data.status !== "playing";
   });
 
-  const me = data.player_x === currentUser.id
+  const me = data.player_x === userId
     ? "X"
-    : data.player_o === currentUser.id
+    : data.player_o === userId
       ? "O"
       : "";
 
-  let status = data.status === "waiting"
-    ? "Waiting for another player..."
-    : data.status === "won"
-      ? (data.winner === currentUser.id
-          ? "🏆 You won!"
-          : "Game over!")
-      : data.status === "draw"
-        ? "It's a draw!"
-        : data.current_turn === currentUser.id
-          ? "Your turn (" + me + ")"
-          : "Opponent's turn";
-
-  $("tttStatus").textContent = status;
-}
+  $("tttStatus").textContent =
+    data.status === "waiting"
+      ? "Waiting for another player..."
+      : data.status === "won"
+        ? (data.winner === userId ? "🏆 You won!" : "Game over!")
+        : data.status === "draw"
+          ? "It's a draw!"
+          : data.current_turn === userId
+            ? "Your turn (" + me + ")"
+            : "Opponent's turn";
+  }
 
 async function refreshTttGame() {
   if (!currentTogetherRoomCode) return;
@@ -1466,7 +1469,7 @@ async function refreshTttGame() {
   }
 
   $("tttGame").hidden = false;
-  renderTttGame(data);
+  await renderTttGame(data);
 }
 
 async function makeTttMove(position) {
@@ -1488,7 +1491,7 @@ async function makeTttMove(position) {
   }
 
   $("tttFeedback").textContent = "";
-  renderTttGame(data);
+  await renderTttGame(data);
 }
 </script>
 </body>
