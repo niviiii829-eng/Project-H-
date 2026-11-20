@@ -304,6 +304,29 @@ body {
 .challenge-panel button {
   margin-top: 10px;
 }
+  /* H PLAY TIC TAC TOE */
+.ttt-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 330px;
+  margin: 20px auto;
+}
+
+.ttt-board button {
+  aspect-ratio: 1;
+  border: 1px solid #777;
+  border-radius: 14px;
+  background: #202638;
+  color: #fff;
+  font-size: 38px;
+  font-weight: bold;
+}
+
+.ttt-board button:disabled {
+  opacity: 1;
+  cursor: default;
+}
 </style>
 </head>
 <body>
@@ -1398,6 +1421,75 @@ async function refreshTogetherLobby() {
   $("currentTogetherActivity").textContent =
     "🎉 Current activity: " + data.activity;
   }
+  function renderTttGame(data) {
+  const board = $("tttBoard");
+  const buttons = board.querySelectorAll("button");
+
+  data.board.forEach((mark, index) => {
+    buttons[index].textContent = mark;
+    buttons[index].disabled =
+      !!mark || data.status !== "playing";
+  });
+
+  const me = data.player_x === currentUser.id
+    ? "X"
+    : data.player_o === currentUser.id
+      ? "O"
+      : "";
+
+  let status = data.status === "waiting"
+    ? "Waiting for another player..."
+    : data.status === "won"
+      ? (data.winner === currentUser.id
+          ? "🏆 You won!"
+          : "Game over!")
+      : data.status === "draw"
+        ? "It's a draw!"
+        : data.current_turn === currentUser.id
+          ? "Your turn (" + me + ")"
+          : "Opponent's turn";
+
+  $("tttStatus").textContent = status;
+}
+
+async function refreshTttGame() {
+  if (!currentTogetherRoomCode) return;
+
+  const { data, error } = await db.rpc(
+    "join_ttt_game",
+    { p_code: currentTogetherRoomCode }
+  );
+
+  if (error) {
+    $("tttFeedback").textContent = error.message;
+    return;
+  }
+
+  $("tttGame").hidden = false;
+  renderTttGame(data);
+}
+
+async function makeTttMove(position) {
+  if (!currentTogetherRoomCode) return;
+
+  $("tttFeedback").textContent = "Making move...";
+
+  const { data, error } = await db.rpc(
+    "make_ttt_move",
+    {
+      p_code: currentTogetherRoomCode,
+      p_position: position
+    }
+  );
+
+  if (error) {
+    $("tttFeedback").textContent = error.message;
+    return;
+  }
+
+  $("tttFeedback").textContent = "";
+  renderTttGame(data);
+}
 </script>
 </body>
 </html>
