@@ -441,6 +441,24 @@ body {
   <h3>Who's here?</h3>
   <div id="togetherMembers"></div>
   <button onclick="refreshTogetherLobby()">Refresh Members</button>
+  <hr>
+
+<h3>🎯 Choose an Activity</h3>
+
+<select id="togetherActivity">
+  <option value="">Choose an activity</option>
+  <option value="Mini Games">🎮 Mini Games</option>
+  <option value="Quick Quizzes">🧠 Quick Quizzes</option>
+  <option value="Daily Challenges">🎯 Daily Challenges</option>
+  <option value="Conversation Prompts">💬 Conversation Prompts</option>
+</select>
+
+<button onclick="saveTogetherActivity()">
+  Start Activity
+</button>
+
+<p id="activityFeedback"></p>
+<p id="currentTogetherActivity">Choose an activity to begin.</p>
 </div>
 </section>
   <!-- BOTTOM NAVIGATION -->
@@ -1327,7 +1345,41 @@ async function loadTogetherLobby(code) {
 async function refreshTogetherLobby() {
   if (!currentTogetherRoomCode) return;
   await loadTogetherLobby(currentTogetherRoomCode);
-}a
+}
+  async function saveTogetherActivity() {
+  const activity = $("togetherActivity").value;
+  const feedback = $("activityFeedback");
+
+  if (!currentTogetherRoomCode) {
+    feedback.textContent = "No active room.";
+    return;
+  }
+
+  if (!activity) {
+    feedback.textContent = "Choose an activity first.";
+    return;
+  }
+
+  feedback.textContent = "Starting activity...";
+
+  const { data, error } = await db.rpc(
+    "set_together_activity",
+    {
+      p_code: currentTogetherRoomCode,
+      p_activity: activity
+    }
+  );
+
+  if (error) {
+    feedback.textContent = "Error: " + error.message;
+    return;
+  }
+
+  $("currentTogetherActivity").textContent =
+    "🎉 Current activity: " + data.activity;
+
+  feedback.textContent = "Activity selected!";
+  }
 </script>
 </body>
 </html>
