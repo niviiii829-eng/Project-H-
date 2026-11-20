@@ -433,7 +433,15 @@ body {
     <button onclick="joinTogetherRoom()">Join Room</button>
   </div>
 
-  <div id="togetherFeedback"></div>
+ <div id="togetherFeedback"></div>
+
+<div id="togetherLobby" class="together-card" hidden>
+  <h2>✨ Room Lobby</h2>
+  <p>Room code: <strong id="lobbyRoomCode"></strong></p>
+  <h3>Who's here?</h3>
+  <div id="togetherMembers"></div>
+  <button onclick="refreshTogetherLobby()">Refresh Members</button>
+</div>
 </section>
   <!-- BOTTOM NAVIGATION -->
 <nav class="bottom-nav">
