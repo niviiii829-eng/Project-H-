@@ -1380,6 +1380,22 @@ async function refreshTogetherLobby() {
 
   feedback.textContent = "Activity selected!";
   }
+  async function refreshTogetherActivity() {
+  if (!currentTogetherRoomCode) return;
+
+  const { data, error } = await db.rpc(
+    "get_together_activity",
+    { p_code: currentTogetherRoomCode }
+  );
+
+  if (error) {
+    $("activityFeedback").textContent = error.message;
+    return;
+  }
+
+  $("currentTogetherActivity").textContent =
+    "🎉 Current activity: " + data.activity;
+  }
 </script>
 </body>
 </html>
