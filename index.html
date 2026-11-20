@@ -479,10 +479,9 @@ body {
 <button onclick="saveTogetherActivity()">
   Start Activity
 </button>
-  <button onclick="refreshTttGame()">
+  <button onclick="document.getElementById('tttGame').hidden=false; document.getElementById('tttFeedback').textContent='Button is working!'">
   🎮 Play Tic-Tac-Toe
   </button>
-
 <p id="activityFeedback"></p>
 <p id="currentTogetherActivity">Choose an activity to begin.</p>
 </div>
