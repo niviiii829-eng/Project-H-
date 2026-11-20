@@ -1235,6 +1235,57 @@ if (currentUser && currentUser.id !== userId) {
         
 
   showScreen("homeScreen");
+  // H TOGETHER: CREATE AND JOIN ROOMS
+
+async function createTogetherRoom() {
+  const feedback = $("togetherFeedback");
+  feedback.textContent = "Creating your room...";
+
+  const { data: userData, error: userError } =
+    await db.auth.getUser();
+
+  if (userError || !userData.user) {
+    feedback.textContent = "Please log in first.";
+    return;
+  }
+
+  const { data, error } = await db.rpc(
+    "create_together_room"
+  );
+
+  if (error) {
+    feedback.textContent = "Error: " + error.message;
+    return;
+  }
+
+  feedback.textContent =
+    "🎉 Room created! Your code is: " + data.code;
+}
+
+async function joinTogetherRoom() {
+  const feedback = $("togetherFeedback");
+  const code = $("roomCodeInput").value.trim();
+
+  if (!code) {
+    feedback.textContent = "Enter a room code first.";
+    return;
+  }
+
+  feedback.textContent = "Joining room...";
+
+  const { data, error } = await db.rpc(
+    "join_together_room",
+    { p_code: code }
+  );
+
+  if (error) {
+    feedback.textContent = "Error: " + error.message;
+    return;
+  }
+
+  feedback.textContent =
+    "🎉 Successfully joined room: " + data.code;
+}
 </script>
 </body>
 </html>
