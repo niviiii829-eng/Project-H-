@@ -1290,8 +1290,7 @@ async function joinTogetherRoom() {
     return;
   }
 
-  feedback.textContent =
-    "🎉 Successfully joined room: " + data.code;
+  await loadTogetherLobby(data.code);
 }
   let currentTogetherRoomCode = "";
 
