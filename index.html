@@ -188,6 +188,35 @@ button.secondary {
   color: #ffffff !important;
   border: 1px solid #46506e !important;
 }
+  /* PROJECT H — BOTTOM NAVIGATION */
+
+body {
+  padding-bottom: 85px;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 650px;
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: #171d30;
+  border-top: 1px solid #394363;
+  z-index: 1000;
+}
+
+.bottom-nav button {
+  flex: 1;
+  width: auto;
+  margin: 0;
+  padding: 13px 5px;
+  font-size: 13px;
+  border-radius: 12px;
+}
 </style>
 </head>
 <body>
@@ -196,79 +225,117 @@ button.secondary {
 <p>Share something. Discover something.</p>
 </header>
 
+
 <main>
-  <section class="home-hub">
-  <div class="home-hero">
-    <p>WELCOME TO YOUR WORLD</p>
-    <h1>Discover something new.</h1>
-    <p>Entertainment, creativity and connections — all in one place.</p>
-    <h2>H NOW ✦</h2>
-    <p>Your next experience starts here.</p>
-  </div>
 
-  <h2>Explore Project H</h2>
-
-  <div class="home-grid">
-    <div class="home-card">
-      <span>🎮</span>
-      <h3>H Play</h3>
-      <p>Games and challenges</p>
+  <!-- HOME SCREEN -->
+  <section class="app-screen home-hub" id="homeScreen">
+    <div class="home-hero">
+      <p>WELCOME TO YOUR WORLD</p>
+      <h1>Discover something new.</h1>
+      <p>Entertainment, creativity and connections — all in one place.</p>
+      <h2>H NOW ✦</h2>
+      <p>Your next experience starts here.</p>
     </div>
 
-    <div class="home-card">
-      <span>💬</span>
-      <h3>H Chat</h3>
-      <p>Messages and conversations</p>
-    </div>
+    <h2>Explore Project H</h2>
 
-    <div class="home-card">
-      <span>🤝</span>
-      <h3>H Together</h3>
-      <p>Shared experiences</p>
+    <div class="home-grid">
+      <div class="home-card">
+        <span>🎮</span>
+        <h3>H Play</h3>
+        <p>Games and challenges</p>
+      </div>
+      <div class="home-card">
+        <span>💬</span>
+        <h3>H Chat</h3>
+        <p>Messages and conversations</p>
+      </div>
+      <div class="home-card">
+        <span>🤝</span>
+        <h3>H Together</h3>
+        <p>Shared experiences</p>
+      </div>
+      <div class="home-card">
+        <span>✨</span>
+        <h3>Community</h3>
+        <p>Discover what people create</p>
+      </div>
     </div>
-
-    <div class="home-card">
-      <span>✨</span>
-      <h3>Community</h3>
-      <p>Discover what people create</p>
-    </div>
-  </div>
   </section>
-<section>
-<h3>Account</h3>
-<input id="email" type="email" placeholder="Email address">
-<input id="password" type="password" placeholder="Password (at least 6 characters)">
-<button id="signup">Create account</button>
-<button id="login" class="secondary">Log in</button>
-<button id="logout" class="secondary" hidden>Log out</button>
 
-<p id="accountStatus" class="muted">You are not logged in.</p>
-</section>
-  <input id="username" placeholder="Choose a username">
-<input id="displayName" placeholder="Your display name">
-<textarea id="bio" placeholder="Write a short bio"></textarea>
-<button id="saveProfile">Save profile</button>
-<p id="profileStatus" class="muted"></p>
+  <!-- COMMUNITY SCREEN -->
+  <section class="app-screen" id="communityScreen" hidden>
+    <h2>Community</h2>
 
-<section>
-<h3>Create a post</h3>
-<textarea id="content" placeholder="What's happening?"></textarea>
-<input id="media" type="file" accept="image/*,video/*" multiple>
-<small>You can attach up to 5 photos or videos. Max 50 MB each.</small>
-<button id="publish">Publish</button>
-<p id="status"></p>
-</section>
+    <h3>Create a post</h3>
+    <textarea id="content" placeholder="What's happening?"></textarea>
+    <input id="media" type="file" accept="image/*,video/*" multiple>
+    <small>You can attach up to 5 photos or videos. Max 50 MB each.</small>
+    <button id="publish">Publish</button>
+    <p id="status"></p>
 
-<h2>Community Feed</h2>
-  <h2>🔍 Discover Members</h2>
-<input id="userSearch" placeholder="Search by username...">
-<button id="searchUsers">Search</button>
-<div id="searchResults"></div>
-  <div id="publicProfile"></div>
-<div id="feed">Loading posts...</div>
+    <h2>🔍 Discover Members</h2>
+    <input id="userSearch" placeholder="Search by username...">
+    <button id="searchUsers">Search</button>
+    <div id="searchResults"></div>
+
+    <div id="publicProfile"></div>
+
+    <h2>Community Feed</h2>
+    <div id="feed">Loading posts...</div>
+  </section>
+
+  <!-- PROFILE SCREEN -->
+  <section class="app-screen" id="profileScreen" hidden>
+    <h2>My Profile</h2>
+
+    <h3>Account</h3>
+    <input id="email" type="email" placeholder="Email address">
+    <input id="password" type="password" placeholder="Password (at least 6 characters)">
+    <button id="signup">Create account</button>
+    <button id="login" class="secondary">Log in</button>
+    <button id="logout" class="secondary" hidden>Log out</button>
+    <p id="accountStatus" class="muted">You are not logged in.</p>
+
+    <h3>Profile Settings</h3>
+    <input id="username" placeholder="Choose a username">
+    <input id="displayName" placeholder="Your display name">
+    <textarea id="bio" placeholder="Write a short bio"></textarea>
+    <button id="saveProfile">Save profile</button>
+    <p id="profileStatus" class="muted"></p>
+  </section>
+
+  <!-- BOTTOM NAVIGATION -->
+  <nav class="bottom-nav">
+    <button onclick="showScreen('homeScreen')">⌂ Home</button>
+    <button onclick="showScreen('communityScreen')">✦ Community</button>
+    <button onclick="showScreen('profileScreen')">◉ Profile</button>
+  </nav>
+
 </main>
+  
+
 
 <script>
+  // PROJECT H SCREEN NAVIGATION
+
+function showScreen(screenId) {
+  document.querySelectorAll(".app-screen").forEach(screen => {
+    screen.hidden = true;
+  });
+
+  const selectedScreen = document.getElementById(screenId);
+
+  if (selectedScreen) {
+    selectedScreen.hidden = false;
+  }
+
+  window.scrollTo(0, 0);
+}
+
+// Open Home by default
+showScreen("homeScreen");
     
 const SUPABASE_URL = "https://dlfxcsugbmrxxnxcxyqx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_pnF24wLGOT932BpguFYx3g_l1-e0XA0";
