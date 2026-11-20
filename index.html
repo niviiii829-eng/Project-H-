@@ -1266,8 +1266,7 @@ async function createTogetherRoom() {
     return;
   }
 
-  feedback.textContent =
-    "🎉 Room created! Your code is: " + data.code;
+  await loadTogetherLobby(data.code);
 }
 
 async function joinTogetherRoom() {
