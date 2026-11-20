@@ -282,6 +282,28 @@ body {
 .daily-drop p {
   color: #c1c9df;
 }
+  /* DAILY CHALLENGE PANEL */
+
+.challenge-panel {
+  background: linear-gradient(145deg, #252044, #192b48);
+  border: 1px solid #8065d9;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 18px 0;
+}
+
+.challenge-panel h2 {
+  color: #d1bdff;
+}
+
+.challenge-panel p {
+  color: #e5e7ff;
+  line-height: 1.6;
+}
+
+.challenge-panel button {
+  margin-top: 10px;
+}
 </style>
 </head>
 <body>
@@ -307,9 +329,21 @@ body {
   <h2>DAILY DROP</h2>
   <h3>A fresh challenge awaits.</h3>
   <p>One new experience. Every day.</p>
-  <button onclick="showScreen('communityScreen')">
-    Explore today's challenge →
+  <button onclick="openDailyChallenge()">
+  Play Today's Challenge →
   </button>
+    </div>
+    <div id="dailyChallenge" class="challenge-panel" hidden>
+  <h2>🧠 Today's Trivia</h2>
+  <p id="challengeQuestion">Which planet is known as the Red Planet?</p>
+
+  <button onclick="answerChallenge('Venus')">Venus</button>
+  <button onclick="answerChallenge('Mars')">Mars</button>
+  <button onclick="answerChallenge('Jupiter')">Jupiter</button>
+  <button onclick="answerChallenge('Saturn')">Saturn</button>
+
+  <p id="challengeFeedback"></p>
+  <button onclick="closeDailyChallenge()">Close Challenge</button>
     </div>
 
     <h2>Explore Project H</h2>
@@ -403,6 +437,37 @@ function showScreen(screenId) {
   document.querySelectorAll(".app-screen").forEach(screen => {
     screen.hidden = true;
   });
+  // DAILY DROP CHALLENGE
+
+function openDailyChallenge() {
+  $("dailyChallenge").hidden = false;
+  $("challengeFeedback").textContent = "";
+  document.querySelectorAll("#dailyChallenge button").forEach(button => {
+    if (button.textContent !== "Close Challenge") {
+      button.disabled = false;
+    }
+  });
+}
+
+function answerChallenge(answer) {
+  const feedback = $("challengeFeedback");
+
+  if (answer === "Mars") {
+    feedback.textContent = "🎉 Correct! Mars is the Red Planet.";
+  } else {
+    feedback.textContent = "Not quite! The correct answer is Mars.";
+  }
+
+  document.querySelectorAll("#dailyChallenge button").forEach(button => {
+    if (button.textContent !== "Close Challenge") {
+      button.disabled = true;
+    }
+  });
+}
+
+function closeDailyChallenge() {
+  $("dailyChallenge").hidden = true;
+}
 
   document.getElementById(screenId).hidden = false;
 
