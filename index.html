@@ -1462,11 +1462,11 @@ async function refreshTttGame() {
     "join_ttt_game",
     { p_code: currentTogetherRoomCode }
   );
-
-  if (error) {
-    $("tttFeedback").textContent = error.message;
-    return;
-  }
+if (error) {
+  $("tttGame").hidden = false;
+  $("tttFeedback").textContent = "Game error: " + error.message;
+  return;
+}
 
   $("tttGame").hidden = false;
   await renderTttGame(data);
