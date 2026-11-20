@@ -440,7 +440,8 @@ function showScreen(screenId) {
   // DAILY DROP CHALLENGE
 
 function openDailyChallenge() {
-  $("dailyChallenge").hidden = false;
+  alert("Challenge button works!");
+$("dailyChallenge").hidden = false;
   $("challengeFeedback").textContent = "";
   document.querySelectorAll("#dailyChallenge button").forEach(button => {
     if (button.textContent !== "Close Challenge") {
