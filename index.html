@@ -74,6 +74,71 @@ img, video {
   max-width: 100%;
   border-radius: 12px;
 }
+  /* FUTURISTIC HOME SCREEN */
+
+.home-hub {
+  margin: 20px 0;
+}
+
+.home-hero {
+  background: linear-gradient(135deg, #29204f, #192d50, #171a32);
+  border: 1px solid #51447f;
+  border-radius: 22px;
+  padding: 24px 18px;
+  margin-bottom: 24px;
+}
+
+.home-hero h1 {
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.home-hero p {
+  color: #c2c5df;
+  line-height: 1.6;
+}
+
+.home-hero h2 {
+  margin-top: 28px;
+  color: #c1aaff;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.home-card {
+  background: linear-gradient(145deg, #252b45, #191e32);
+  border: 1px solid #394363;
+  border-radius: 18px;
+  padding: 18px 14px;
+  transition: transform 0.2s ease;
+}
+
+.home-card:active {
+  transform: scale(0.97);
+}
+
+.home-card span {
+  font-size: 30px;
+}
+
+.home-card h3 {
+  margin-bottom: 6px;
+}
+
+.home-card p {
+  color: #a9b1cc;
+  font-size: 13px;
+}
+
+@media (max-width: 360px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
 </head>
 <body>
@@ -83,6 +148,43 @@ img, video {
 </header>
 
 <main>
+  <section class="home-hub">
+  <div class="home-hero">
+    <p>WELCOME TO YOUR WORLD</p>
+    <h1>Discover something new.</h1>
+    <p>Entertainment, creativity and connections — all in one place.</p>
+    <h2>H NOW ✦</h2>
+    <p>Your next experience starts here.</p>
+  </div>
+
+  <h2>Explore Project H</h2>
+
+  <div class="home-grid">
+    <div class="home-card">
+      <span>🎮</span>
+      <h3>H Play</h3>
+      <p>Games and challenges</p>
+    </div>
+
+    <div class="home-card">
+      <span>💬</span>
+      <h3>H Chat</h3>
+      <p>Messages and conversations</p>
+    </div>
+
+    <div class="home-card">
+      <span>🤝</span>
+      <h3>H Together</h3>
+      <p>Shared experiences</p>
+    </div>
+
+    <div class="home-card">
+      <span>✨</span>
+      <h3>Community</h3>
+      <p>Discover what people create</p>
+    </div>
+  </div>
+  </section>
 <section>
 <h3>Account</h3>
 <input id="email" type="email" placeholder="Email address">
