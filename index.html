@@ -1456,22 +1456,28 @@ async function refreshTogetherLobby() {
   }
 
 async function refreshTttGame() {
-  if (!currentTogetherRoomCode) return;
+  $("tttGame").hidden = false;
+  $("tttFeedback").textContent = "Loading game...";
+
+  if (!currentTogetherRoomCode) {
+    $("tttFeedback").textContent = "No active room.";
+    return;
+  }
 
   const { data, error } = await db.rpc(
     "join_ttt_game",
     { p_code: currentTogetherRoomCode }
   );
-if (error) {
-  $("tttGame").hidden = false;
-  $("tttFeedback").textContent = "Game error: " + error.message;
-  return;
-}
 
-  $("tttGame").hidden = false;
+  if (error) {
+    $("tttFeedback").textContent =
+      "Game error: " + error.message;
+    return;
+  }
+
+  $("tttFeedback").textContent = "";
   await renderTttGame(data);
 }
-
 async function makeTttMove(position) {
   if (!currentTogetherRoomCode) return;
 
