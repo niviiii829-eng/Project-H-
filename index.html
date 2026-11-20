@@ -431,23 +431,34 @@ body {
 
 
 <script>
-  // PROJECT H SCREEN NAVIGATION
+  
+// PROJECT H SCREEN NAVIGATION
 
 function showScreen(screenId) {
   document.querySelectorAll(".app-screen").forEach(screen => {
     screen.hidden = true;
   });
-  showScreen("homeScreen");
-  // DAILY DROP CHALLENGE
+
+  document.getElementById(screenId).hidden = false;
+
+  document.querySelectorAll(".bottom-nav button").forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.screen === screenId
+    );
+  });
+
+  window.scrollTo(0, 0);
+}
+
+// DAILY DROP CHALLENGE
 
 function openDailyChallenge() {
-  alert("Challenge button works!");
-$("dailyChallenge").hidden = false;
+  $("dailyChallenge").hidden = false;
   $("challengeFeedback").textContent = "";
+
   document.querySelectorAll("#dailyChallenge button").forEach(button => {
-    if (button.textContent !== "Close Challenge") {
-      button.disabled = false;
-    }
+    button.disabled = false;
   });
 }
 
@@ -471,21 +482,10 @@ function closeDailyChallenge() {
   $("dailyChallenge").hidden = true;
 }
 
-  document.getElementById(screenId).hidden = false;
-
-  document.querySelectorAll(".bottom-nav button").forEach(button => {
-    button.classList.toggle(
-      "active",
-      button.dataset.screen === screenId
-    );
-  });
-
-  window.scrollTo(0, 0);
-}
-
-// Open Home by default
+// OPEN HOME BY DEFAULT
 showScreen("homeScreen");
-    
+
+ 
 const SUPABASE_URL = "https://dlfxcsugbmrxxnxcxyqx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_pnF24wLGOT932BpguFYx3g_l1-e0XA0";
 
