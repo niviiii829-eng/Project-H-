@@ -229,6 +229,28 @@ body {
   border: 1px solid #c1aaff !important;
   box-shadow: 0 0 16px rgba(155, 130, 255, 0.55) !important;
 }
+  /* PROJECT H — SCREEN TRANSITIONS */
+
+.app-screen:not([hidden]) {
+  animation: screenEnter 0.3s ease both;
+}
+
+@keyframes screenEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-screen:not([hidden]) {
+    animation: none;
+  }
+}
 </style>
 </head>
 <body>
