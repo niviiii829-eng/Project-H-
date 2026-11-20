@@ -1344,7 +1344,9 @@ async function loadTogetherLobby(code) {
 
 async function refreshTogetherLobby() {
   if (!currentTogetherRoomCode) return;
+
   await loadTogetherLobby(currentTogetherRoomCode);
+  await refreshTogetherActivity();
 }
   async function saveTogetherActivity() {
   const activity = $("togetherActivity").value;
