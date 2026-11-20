@@ -486,6 +486,26 @@ body {
 <p id="activityFeedback"></p>
 <p id="currentTogetherActivity">Choose an activity to begin.</p>
 </div>
+  <!-- H PLAY: TIC-TAC-TOE -->
+<div id="tttGame" class="together-card" hidden>
+  <h2>🎮 H Play — Tic-Tac-Toe</h2>
+  <p id="tttStatus">Waiting for players...</p>
+
+  <div id="tttBoard" class="ttt-board">
+    <button onclick="makeTttMove(1)"></button>
+    <button onclick="makeTttMove(2)"></button>
+    <button onclick="makeTttMove(3)"></button>
+    <button onclick="makeTttMove(4)"></button>
+    <button onclick="makeTttMove(5)"></button>
+    <button onclick="makeTttMove(6)"></button>
+    <button onclick="makeTttMove(7)"></button>
+    <button onclick="makeTttMove(8)"></button>
+    <button onclick="makeTttMove(9)"></button>
+  </div>
+
+  <p id="tttFeedback"></p>
+  <button onclick="refreshTttGame()">Refresh Game</button>
+</div>
 </section>
   <!-- BOTTOM NAVIGATION -->
 <nav class="bottom-nav">
