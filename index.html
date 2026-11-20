@@ -1294,6 +1294,42 @@ async function joinTogetherRoom() {
   feedback.textContent =
     "🎉 Successfully joined room: " + data.code;
 }
+  let currentTogetherRoomCode = "";
+
+async function loadTogetherLobby(code) {
+  const feedback = $("togetherFeedback");
+  feedback.textContent = "Loading room...";
+
+  const { data, error } = await db.rpc(
+    "get_together_room",
+    { p_code: code }
+  );
+
+  if (error) {
+    feedback.textContent = "Error: " + error.message;
+    return;
+  }
+
+  currentTogetherRoomCode = data.code;
+
+  $("lobbyRoomCode").textContent = data.code;
+  $("togetherMembers").innerHTML = "";
+
+  (data.members || []).forEach(member => {
+    const item = document.createElement("p");
+    item.textContent =
+      member.display_name || member.username || "Member";
+    $("togetherMembers").appendChild(item);
+  });
+
+  $("togetherLobby").hidden = false;
+  feedback.textContent = "You're in the room!";
+}
+
+async function refreshTogetherLobby() {
+  if (!currentTogetherRoomCode) return;
+  await loadTogetherLobby(currentTogetherRoomCode);
+}a
 </script>
 </body>
 </html>
